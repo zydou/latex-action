@@ -9,6 +9,7 @@ on:
       - .github/workflows/test.yml
       - entrypoint.sh
       - action.yml
+      - test/
   pull_request:
   schedule:
     - cron: 0 12 1 * *
