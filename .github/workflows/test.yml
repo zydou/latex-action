@@ -1,9 +1,12 @@
+---
 name: Test Github Action
 on:
   push:
+    branches:
+      - master
   pull_request:
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: 0 12 1 * *
   workflow_dispatch:
 jobs:
   test:
@@ -16,6 +19,7 @@ jobs:
         with:
           root_file: test.tex
           working_directory: test/
+
       - name: Compile LaTeX document with pre/post compile actions
         uses: ./
         with:
@@ -25,6 +29,7 @@ jobs:
             rm test.pdf
           post_compile: |
             ls test.pdf
+
       - name: Compile multiple LaTeX documents
         uses: ./
         with:
@@ -32,48 +37,56 @@ jobs:
             file1.tex
             file2.tex
           working_directory: test/
+
       - name: Compile multiple LaTeX documents using glob
         uses: ./
         with:
-          root_file: "glob_test*.tex"
+          root_file: glob_test*.tex
           glob_root_file: true
           working_directory: test/
+
       - name: Compile multiple LaTeX documents in different directories
         uses: ./
         with:
-          root_file: "subdir*/main.tex"
+          root_file: subdir*/main.tex
           glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
+
       - name: Compile multiple LaTeX documents in different directories using extended glob
         uses: ./
         with:
-          root_file: "extglob/!(subdir3)_glob/*.tex"
+          root_file: extglob/!(subdir3)_glob/*.tex
           glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
+
       - name: Compile multiple LaTeX documents in different directories using glob star
         uses: ./
         with:
-          root_file: "globstar/**/*.tex"
+          root_file: globstar/**/*.tex
           glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
+
       - name: Compile LaTeX document with math symbols
         uses: ./
         with:
           root_file: math.tex
           working_directory: test/
+
       - name: Compile LaTeX document with biblatex/biber
         uses: ./
         with:
           root_file: biblatex.tex
           working_directory: test/
+
       - name: Compile LaTeX document with eps figure
         uses: ./
         with:
           root_file: eps.tex
           working_directory: test/
+
       - name: Compile LaTeX document with minted and lualatex
         uses: ./
         with:
@@ -81,23 +94,29 @@ jobs:
           working_directory: test/
           latexmk_shell_escape: true
           latexmk_use_lualatex: true
+          extra_system_packages: python3-pkg-resources
+
       - name: Download extra fonts
         run: |
-          curl -OL https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans-Regular.ttf
+          curl -OL https://github.com/silnrsi/font-doulos/raw/78bd59af3dd78e8276918471d8a228348bf741e8/references/v6200/DoulosSIL-Regular.ttf
+
       - name: Compile LaTeX document with extra_fonts
         uses: ./
         with:
           root_file: extra_fonts.tex
           working_directory: test/
           latexmk_use_xelatex: true
-          extra_fonts: "./../NotoSans-Regular.ttf"
+          extra_fonts: ./../DoulosSIL-Regular.ttf
+
       - name: Compile LaTeX document with arara and graphviz
         uses: ./
         with:
           root_file: graphviz.tex
           working_directory: test/
           compiler: arara
-          args: "--verbose"
+          args: --verbose
+          extra_system_packages: graphviz
+
       - name: Compile LaTeX document with continue_on_error
         uses: ./
         with:
@@ -107,28 +126,59 @@ jobs:
           working_directory: test/
           continue_on_error: true
         continue-on-error: true
-      - name: Check pdf files
+
+      - name: Test basic (test.tex)
+        run: file test/test.pdf | grep -q ' PDF '
+
+      - name: Test multiple (file1.tex, file2.tex)
         run: |
-          file test/test.pdf | grep -q ' PDF '
           file test/file1.pdf | grep -q ' PDF '
           file test/file2.pdf | grep -q ' PDF '
+
+      - name: Test glob (glob_test1.tex, glob_test2.tex)
+        run: |
           file test/glob_test1.pdf | grep -q ' PDF '
           file test/glob_test2.pdf | grep -q ' PDF '
-          file test/subdir1/main.pdf | grep -q ' PDF '
-          file test/subdir2/main.pdf | grep -q ' PDF '
+
+      - name: Test different subdirs (subdir*/main.tex)
+        run: |
+          file test/glob_test1.pdf | grep -q ' PDF '
+          file test/glob_test2.pdf | grep -q ' PDF '
+
+      - name: Test extglob (extglob/!(subdir3)_glob/*.tex)
+        run: |
           file test/extglob/subdir1_glob/main.pdf | grep -q ' PDF '
           file test/extglob/subdir2_glob/main.pdf | grep -q ' PDF '
           file test/extglob/subdir3_glob/main.pdf | grep -q -v ' PDF '
+
+      - name: Test globstar (globstar/**/*.tex)
+        run: |
           file test/globstar/subdir/main.pdf | grep -q ' PDF '
           file test/globstar/subdir/subdir/subdir/main.pdf | grep -q ' PDF '
-          file test/math.pdf | grep -q ' PDF '
-          file test/biblatex.pdf | grep -q ' PDF '
-          file test/eps.pdf | grep -q ' PDF '
-          file test/minted.pdf | grep -q ' PDF '
-          file test/extra_fonts.pdf | grep -q ' PDF '
+
+      - name: Test math (math.tex)
+        run: file test/math.pdf | grep -q ' PDF '
+
+      - name: Test biblatex/biber (biblatex.tex)
+        run: file test/biblatex.pdf | grep -q ' PDF '
+
+      - name: Test eps figure (eps.tex)
+        run: file test/eps.pdf | grep -q ' PDF '
+
+      - name: Test minted and lualatex (minted.tex)
+        run: file test/minted.pdf | grep -q ' PDF '
+
+      - name: Test extra_fonts (extra_fonts.tex)
+        run: file test/extra_fonts.pdf | grep -q ' PDF '
+
+      - name: Test arara and graphviz (graphviz.tex)
+        run: |
           file test/graphviz.pdf | grep -q ' PDF '
           file test/abc.pdf | grep -q ' PDF '
-          file test/not_error.pdf | grep -q ' PDF '
+
+      - name: Test continue_on_error (error.tex, not_error.tex)
+        run: file test/not_error.pdf | grep -q ' PDF '
+
       - name: Upload
         uses: actions/upload-artifact@v3
         with:

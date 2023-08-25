@@ -34,7 +34,7 @@ latexmk_use_xelatex="${15}"
 
 # install git on old images
 if ! command -v git &>/dev/null; then
-  apk --no-cache add git
+  apt-get update -qq && apt-get install -qq -y git
 fi
 git config --system --add safe.directory /github/workspace
 
@@ -113,10 +113,11 @@ else
 fi
 
 if [[ -n "$extra_system_packages" ]]; then
+  apt-get update -qq
   IFS=$' \t\n'
   for pkg in $extra_system_packages; do
-    info "Install $pkg by apk"
-    apk --no-cache add "$pkg"
+    info "Install $pkg by apt"
+    apt-get install -qq -y "$pkg"
   done
 fi
 
@@ -153,8 +154,6 @@ if [[ -n "$pre_compile" ]]; then
   eval "$pre_compile"
 fi
 
-exit_code=0
-
 for f in "${root_file[@]}"; do
   if [[ -z "$f" ]]; then
     continue
@@ -175,7 +174,7 @@ for f in "${root_file[@]}"; do
   "$compiler" "${args[@]}" "$f" || ret="$?"
   if [[ "$ret" -ne 0 ]]; then
     if [[ -n "$continue_on_error" ]]; then
-      exit_code="$ret"
+      warn "Compile $f failed with exit_code $ret. However, we will continue since 'continue-on-error' is enabled."
     else
       exit "$ret"
     fi
@@ -190,5 +189,3 @@ if [[ -n "$post_compile" ]]; then
   info "Run post compile commands"
   eval "$post_compile"
 fi
-
-exit "$exit_code"
