@@ -1,0 +1,61 @@
+---
+bin: git
+style: github
+template: CHANGELOG.tpl.md
+
+info:
+  title: CHANGELOG
+
+options:
+  sort: date
+  commits:
+    sort_by: Scope
+    filters:
+      Type:
+        - build
+        - chore
+        - ci
+        - docs
+        - feat
+        - fix
+        - perf
+        - refactor
+        - revert
+        - style
+        - test
+  commit_groups:
+    group_by: Type
+    sort_by: Custom
+    title_order:
+      - feat
+      - fix
+      - ci
+      - build
+      - refactor
+      - perf
+      - revert
+      - style
+      - test
+      - docs
+      - chore
+    title_maps:
+      build: Build System
+      chore: Chores
+      ci: Continuous Integration
+      docs: Documentation
+      feat: Features
+      fix: Bug Fixes
+      perf: Performance Improvements
+      refactor: Code Refactoring
+      revert: Reverts
+      style: Styles
+      test: Tests
+  header:
+    pattern: ^(\w*)(?:\(([\w\$\.\-\*\s]*)\))?\:\s(.*)$
+    pattern_maps:
+      - Type
+      - Scope
+      - Subject
+  notes:
+    keywords:
+      - BREAKING CHANGE
