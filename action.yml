@@ -3,6 +3,12 @@ name: Github Action for LaTeX
 description: GitHub Action to compile LaTeX documents
 author: Cheng XU
 inputs:
+  texlive_version:
+    description: Tex Live version to be used
+    default: latest
+  debian_release:
+    description: Debian debian_release to be used
+    default: trixie
   root_file:
     description: The root LaTeX file to be compiled
     required: true
@@ -46,7 +52,7 @@ runs:
         -v "${GITHUB_ACTION_PATH}/entrypoint.sh":/entrypoint.sh
         -w /github/workspace
         --entrypoint "/entrypoint.sh"
-        zydou/texlive:latest
+        zydou/texlive:${{ inputs.texlive_version }}-${{ inputs.debian_release }}
         "${{ inputs.root_file }}"
         "${{ inputs.glob_root_file }}"
         "${{ inputs.working_directory }}"
