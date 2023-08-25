@@ -1,13 +1,19 @@
 ---
 name: Test Github Action
+
 on:
   push:
     branches:
       - master
+    paths:
+      - .github/workflows/test.yml
+      - entrypoint.sh
+      - action.yml
   pull_request:
   schedule:
     - cron: 0 12 1 * *
   workflow_dispatch:
+
 jobs:
   test:
     strategy:
