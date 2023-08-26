@@ -1,116 +1,190 @@
 # latex-action
 
-[![GitHub Actions Status](https://github.com/xu-cheng/latex-action/workflows/Test%20Github%20Action/badge.svg)](https://github.com/xu-cheng/latex-action/actions)
+[![Test](https://github.com/zydou/latex-action/actions/workflows/test.yml/badge.svg)](https://github.com/zydou/latex-action/actions/workflows/test.yml)
 
-GitHub Action to compile LaTeX documents.
+This is a GitHub Action to compile LaTeX documents, and it's based on [xu-cheng/latex-action](https://github.com/xu-cheng/latex-action).
 
-It runs in [a docker container](https://github.com/xu-cheng/latex-docker) with a full [TeXLive](https://www.tug.org/texlive/) environment installed.
+## What's the difference from the original action?
 
-If you want to run arbitrary commands in a TeXLive environment, use [texlive-action](https://github.com/xu-cheng/texlive-action) instead.
+|                         | **Original** | **This Action** |
+| ----------------------- | ------------ | --------------- |
+| base image              | Alpine       | Debian          |
+| install system packages | apk add      | apt-get install |
+| choose texlive version  | ✅            | ✅               |
+| choose base image       | /            | ✅               |
+
+The main difference is that this action uses `Debian` as the base image, whereas the original uses `Alpine`. Certain tools require `glibc` to function properly. With Debian OS, you won't encounter any glibc-related issues and can use `apt-get` to install a wider range of packages compared to using `apk` in Alpine. For instance, the Alpine-based image lacks the [xindy package](https://github.com/xu-cheng/latex-action/issues/32).
+
+In addition, this action also allows you to specify the TeX Live version and the Debian release version through input parameters. In contrast, the original action requires the use of different tags to specify the TeX Live version. The advantage of this is that you can easily use `matrix` syntax to build your document with multiple TeX Live versions. For example:
+
+```yaml
+jobs:
+  build_latex:
+    strategy:
+      fail-fast: false
+      matrix:
+        texlive: [2023, 2022, 2021, 2020, 2019, 2018] # `latest` is also valid
+        debian: [buster, bullseye, bookworm, trixie]
+    name: texlive-${{ matrix.texlive }}-${{ matrix.debian_release }}
+```
+
+It's not possible to do this for the original action because currently GitHub Actions doesn't support to use `matrix` syntax in `uses` field.
 
 ## Inputs
 
 Each input is provided as a key inside the `with` section of the action.
 
-* `root_file`
+- `root_file` (**required**, defaults to: "")
 
-    The root LaTeX file to be compiled. This input is required. You can also pass multiple files as a multi-line string to compile multiple documents. For example:
-    ```yaml
-    - uses: xu-cheng/latex-action@v2
+  The root LaTeX file to be compiled. You can also pass multiple files as a multi-line string to compile multiple documents. For example:
+
+  ```yaml
+    - uses: zydou/latex-action@v3
       with:
         root_file: |
           file1.tex
           file2.tex
-    ```
+  ```
 
-* `glob_root_file`
+- `glob_root_file` (optional, defaults to: "false")
 
-    If set, interpret the `root_file` input as bash glob pattern. For example:
-    ```yaml
-    - uses: xu-cheng/latex-action@v2
+  If set, interpret the `root_file` input as bash glob pattern. For example:
+
+  ```yaml
+    - uses: zydou/latex-action@v3
       with:
-        root_file: "*.tex"
+        root_file: '*.tex'
         glob_root_file: true
-    ```
+  ```
 
-* `working_directory`
+- `working_directory` (optional, defaults to: ".")
 
-    The working directory for this action.
+  The working directory for this action.
 
-* `work_in_root_file_dir`
+- `work_in_root_file_dir` (optional, defaults to: "false")
 
-    Change directory into each root file's directory before compiling each documents. This will be helpful if you want to build multiple documents and have the compiler work in each of the corresponding directories.
+  Change directory into each root file's directory before compiling each documents. This will be helpful if you want to build multiple documents and have the compiler work in each of the corresponding directories.
 
-* `continue_on_error`
+- `continue_on_error` (optional, defaults to: "false")
 
-    Continuing to build document even with LaTeX build errors. This will be helpful if you want to build multiple documents regardless of any build error. Noted that even with this input set, this action will always report failure upon any build error. If you want to prevent the GitHub action job also from failure, please refer to [the upstream document](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error).
+  Continuing to build document even with LaTeX build errors. This will be helpful if you want to build multiple documents regardless of any build error.
 
-* `compiler`
+- `compiler` (optional, defaults to: "latexmk")
 
-    The LaTeX engine to be invoked. By default, [`latexmk`](https://ctan.org/pkg/latexmk) is used, which automates the process of generating LaTeX documents by issuing the appropriate sequence of commands to be run.
+  The LaTeX engine to be invoked. By default, [`latexmk`](https://ctan.org/pkg/latexmk) is used, which automates the process of generating LaTeX documents by issuing the appropriate sequence of commands to be run.
 
-* `args`
+- `args` (optional, defaults to: "-pdf -file-line-error -halt-on-error -interaction=nonstopmode")
 
-    The extra arguments to be passed to the LaTeX engine. By default, it is `-pdf -file-line-error -halt-on-error -interaction=nonstopmode`. This tells `latexmk` to use `pdflatex`. Refer to [`latexmk` document](http://texdoc.net/texmf-dist/doc/support/latexmk/latexmk.pdf) for more information.
+  The extra arguments to be passed to the LaTeX engine. By default, it is `-pdf -file-line-error -halt-on-error -interaction=nonstopmode`. This tells `latexmk` to use `pdflatex`. Refer to [`latexmk` document](http://texdoc.net/texmf-dist/doc/support/latexmk/latexmk.pdf) for more information.
 
-* `extra_system_packages`
+- `extra_system_packages` (optional, defaults to: "")
 
-    The extra packages to be installed by [`apk`](https://pkgs.alpinelinux.org/packages) separated by space. For example, `extra_system_packages: "inkscape"` will install the package `inkscape` to allow using SVG images in your LaTeX document.
+  The extra packages to be installed by [`apk`](https://pkgs.alpinelinux.org/packages) separated by space. For example, `extra_system_packages: "inkscape"` will install the package `inkscape` to allow using SVG images in your LaTeX document.
 
-* `extra_fonts`
+- `extra_fonts` (optional, defaults to: "")
 
-    Install extra `.ttf`/`.otf` fonts to be used by `fontspec`. You can also pass multiple files as a multi-line string. Each file path will be interpreted as glob pattern. For example:
-    ```yaml
-    - uses: xu-cheng/latex-action@v2
+  Install extra `.ttf`/`.otf` fonts to be used by `fontspec`. You can also pass multiple files as a multi-line string. Each file path will be interpreted as glob pattern. For example:
+
+  ```yaml
+    - uses: zydou/latex-action@v3
       with:
         root_file: main.tex
         extra_fonts: |
           ./path/to/custom.ttf
           ./fonts/*.otf
-    ```
+  ```
 
-* `pre_compile`
+- `pre_compile` (optional, defaults to: "")
 
-    Arbitrary bash codes to be executed before compiling LaTeX documents. For example, `pre_compile: "tlmgr update --self && tlmgr update --all"` to update all TeXLive packages.
+  Arbitrary bash codes to be executed before compiling LaTeX documents. For example, `pre_compile: "tlmgr update --self && tlmgr update --all"` to update all TeXLive packages.
 
-* `post_compile`
+- `post_compile` (optional, defaults to: "")
 
-    Arbitrary bash codes to be executed after compiling LaTeX documents. For example, `post_compile: "latexmk -c"` to clean up temporary files.
+  Arbitrary bash codes to be executed after compiling LaTeX documents. For example, `post_compile: "latexmk -c"` to clean up temporary files.
 
 **The following inputs are only valid if the input `compiler` is not changed.**
 
-* `latexmk_shell_escape`
+- `latexmk_shell_escape` (optional, defaults to: "false")
 
-    Instruct `latexmk` to enable `--shell-escape`.
+  Instruct `latexmk` to enable `--shell-escape`.
 
-* `latexmk_use_lualatex`
+- `latexmk_use_lualatex` (optional, defaults to: "false")
 
-    Instruct `latexmk` to use LuaLaTeX.
+  Instruct `latexmk` to use LuaLaTeX.
 
-* `latexmk_use_xelatex`
+- `latexmk_use_xelatex` (optional, defaults to: "false")
 
-    Instruct `latexmk` to use XeLaTeX.
+  Instruct `latexmk` to use XeLaTeX.
+
+- `texlive_version` (optional, defaults to: "latest")
+
+  The TeX Live version to be used. Currently, you can choose from `2018`, `2019`, `2020`, `2021`, `2022`, `2023`, or `latest`.
+
+- `debian_release` (optional, defaults to: "trixie")
+
+  The Debian release of base image to be used. Currently, you can choose from `buster`, `bullseye`, `bookworm`, or `trixie`.
 
 ## Example
 
 ```yaml
-name: Build LaTeX document
-on: [push]
+name: Build LaTeX
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_latex:
+    strategy:
+      fail-fast: false
+      matrix:
+        texlive: [2023, 2022, 2021] # choose from 2018 to 2023, or latest
+        # if you need to use different debian release, uncomment the following line
+        # debian: [buster, bullseye, bookworm, trixie]
+    name: Build with texlive-${{ matrix.texlive }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Set up Git repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+
       - name: Compile LaTeX document
-        uses: xu-cheng/latex-action@v2
+        uses: zydou/latex-action@v3
         with:
-          root_file: main.tex
-      - name: Upload PDF file
+          texlive_version: ${{ matrix.texlive }}
+          work_in_root_file_dir: true
+          continue_on_error: true
+          glob_root_file: true
+          root_file: |
+            **/*.tex
+
+      - name: Upload all assets to CI artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: PDF
-          path: main.pdf
+          name: latex
+          path: |
+            ./*
+            !.git
+            !.github
+
+      - name: Collect pdf files
+        run: |
+          mkdir public
+          find . -type f -name "*.pdf" -exec cp {} public \;
+
+      - name: Push pdf files to texlive-${{matrix.texlive}} branch
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: texlive-${{ matrix.texlive }}
+          folder: ./public
+          single-commit: true
+          commit-message: ${{ github.event.head_commit.message }}
 ```
 
 ## FAQs
@@ -120,17 +194,17 @@ jobs:
 By default, this action uses pdfLaTeX. If you want to use XeLaTeX or LuaLaTeX, you can set the `latexmk_use_xelatex` or `latexmk_use_lualatex` input respectively. For example:
 
 ```yaml
-- uses: xu-cheng/latex-action@v2
-  with:
-    root_file: main.tex
-    latexmk_use_xelatex: true
+  - uses: zydou/latex-action@v3
+    with:
+      root_file: main.tex
+      latexmk_use_xelatex: true
 ```
 
 ```yaml
-- uses: xu-cheng/latex-action@v2
-  with:
-    root_file: main.tex
-    latexmk_use_lualatex: true
+  - uses: zydou/latex-action@v3
+    with:
+      root_file: main.tex
+      latexmk_use_lualatex: true
 ```
 
 Alternatively, you could create a `.latexmkrc` file. Refer to the [`latexmk` document](http://texdoc.net/texmf-dist/doc/support/latexmk/latexmk.pdf) for more information.
@@ -140,73 +214,62 @@ Alternatively, you could create a `.latexmkrc` file. Refer to the [`latexmk` doc
 To enable `--shell-escape`, set the `latexmk_shell_escape` input.
 
 ```yaml
-- uses: xu-cheng/latex-action@v2
-  with:
-    root_file: main.tex
-    latexmk_shell_escape: true
+  - uses: zydou/latex-action@v3
+    with:
+      root_file: main.tex
+      latexmk_shell_escape: true
 ```
 
 ### Where is the PDF file? How to upload it?
 
 The PDF file will be in the same folder as that of the LaTeX source in the CI environment. It is up to you on whether to upload it to some places. Here are some example.
-* You can use [`@actions/upload-artifact`](https://github.com/actions/upload-artifact) to upload a zip containing the PDF file to the workflow tab. For example you can add
+
+- You can use [`@actions/upload-artifact`](https://github.com/actions/upload-artifact) to upload a zip containing the PDF file to the workflow tab. For example you can add
 
   ```yaml
-  - uses: actions/upload-artifact@v3
-    with:
-      name: PDF
-      path: main.pdf
+    - uses: actions/upload-artifact@v3
+      with:
+        name: PDF
+        path: main.pdf
   ```
 
   It will result in a `PDF.zip` being uploaded with `main.pdf` contained inside.
 
-* You can use [`@softprops/action-gh-release`](https://github.com/softprops/action-gh-release) to upload PDF file to the Github Release.
-* You can use normal shell tools such as `scp`/`git`/`rsync` to upload PDF file anywhere. For example, you can git push to the `gh-pages` branch in your repo, so you can view the document using Github Pages.
+- You can use [`@softprops/action-gh-release`](https://github.com/softprops/action-gh-release) to upload PDF file to the Github Release.
+
+- You can use [`@JamesIves/github-pages-deploy-action`](https://github.com/JamesIves/github-pages-deploy-action) to upload PDF file to a git branch. For example, you can upload to the `gh-pages` branch in your repo, so you can view the document using Github Pages.
+
+- You can use normal shell tools such as `scp`/`git`/`rsync` to upload PDF file anywhere.
 
 ### How to add additional paths to the LaTeX input search path?
 
 Sometimes you may have custom package (`.sty`) or class (`.cls`) files in other directories. If you want to add these directories to the LaTeX input search path, you can add them in `TEXINPUTS` environment variable. For example:
 
 ```yaml
-- name: Download custom template
-  run: |
-    curl -OL https://example.com/custom_template.zip
-    unzip custom_template.zip
-- uses: xu-cheng/latex-action@v2
-  with:
-    root_file: main.tex
-  env:
-    TEXINPUTS: ".:./custom_template//:"
+  - name: Download custom template
+    run: |
+      curl -OL https://example.com/custom_template.zip
+      unzip custom_template.zip
+  - uses: zydou/latex-action@v3
+    with:
+      root_file: main.tex
+    env:
+      TEXINPUTS: '.:./custom_template//:'
 ```
 
 Noted that you should NOT use `{{ github.workspace }}` or `$GITHUB_WORKSPACE` in `TEXINPUTS`. This action works in a separated docker container, where the workspace directory is mounted into it. Therefore, the workspace directory inside the docker container is different from `github.workspace`.
 
 You can find more information of `TEXINPUTS` [here](https://tex.stackexchange.com/a/93733).
 
-### How to use old versions of TeXLive?
-
-By default, this action always uses the latest docker image that contains the latest TeXLive updates. If you want to use old versions of TeXLive, you can change the action version tag accordingly. Currently, three last old versions of TeXLive are supported. 
-
-```yaml
-- uses: xu-cheng/latex-action@v2             # TeXLive 2023
-- uses: xu-cheng/latex-action@v2-texlive2022 # TeXLive 2022
-- uses: xu-cheng/latex-action@v2-texlive2021 # TeXLive 2021
-- uses: xu-cheng/latex-action@v2-texlive2020 # TeXLive 2020
-```
-
-### It fails due to `xindy` cannot be found.
-
-This is an upstream issue where `xindy.x86_64-linuxmusl` is currently missing in TeXLive. To work around it, try [this](https://github.com/xu-cheng/latex-action/issues/32#issuecomment-626086551).
-
 ### It fails to build the document, how to solve it?
 
-* Try to solve the problem by examining the build log.
-* Try to build the document locally.
-* You can also try to narrow the problem by creating a [minimal working example][mwe] to reproduce the problem.
-* [Open an issue](https://github.com/xu-cheng/latex-action/issues/new) if you need help. Please include a [minimal working example][mwe] to demonstrate your problem.
-
-[mwe]: https://tex.meta.stackexchange.com/questions/228/ive-just-been-asked-to-write-a-minimal-working-example-mwe-what-is-that
+- Try to solve the problem by examining the build log.
+- Try to build the document locally.
+- You can also try to narrow the problem by creating a [minimal working example][mwe] to reproduce the problem.
+- [Open an issue](https://github.com/xu-cheng/latex-action/issues/new) if you need help. Please include a [minimal working example][mwe] to demonstrate your problem.
 
 ## License
 
 MIT
+
+[mwe]: https://tex.meta.stackexchange.com/questions/228/ive-just-been-asked-to-write-a-minimal-working-example-mwe-what-is-that
