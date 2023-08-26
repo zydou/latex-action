@@ -1,9 +1,33 @@
+## [v3.1.2](https://github.com/zydou/latex-action/compare/v3.1.1...v3.1.2) (2023-08-26)
+
+### Bug Fixes
+
+- use equals sign to compare strings by **@zydou** in [aa8bcf7](https://github.com/zydou/latex-action/commit/aa8bcf7ea310b1b53f81a646f8c991390df2fa49)
+
+### Continuous Integration
+
+- **test:** add test directory to ci by **@zydou** in [d281589](https://github.com/zydou/latex-action/commit/d281589f2264c8f60537265cb99ef17e93efed78)
+
+### Styles
+
+- apply formatter `beautifysh` and `shfmt`, fix `shellcheck` warning by **@zydou** in [e5dc5ba](https://github.com/zydou/latex-action/commit/e5dc5ba3c15e2e8b29d448c41db303e5d392613c)
+
+### Documentation
+
+- update usages and add comparisons to the original by **@zydou** in [5ccce87](https://github.com/zydou/latex-action/commit/5ccce876b13095c6e2dd090b4069218a75ee9495)
+
+### Full Changelog: [v3.1.1 -> v3.1.2](https://github.com/zydou/latex-action/compare/v3.1.1...v3.1.2)
+
 ## [v3.1.1](https://github.com/zydou/latex-action/compare/v3.1.0...v3.1.1) (2023-08-26)
 
 ### Continuous Integration
 
 - update release workflow by **@zydou** in [f291f9a](https://github.com/zydou/latex-action/commit/f291f9aa9e288c7c78e81f0e7d85941239356a1d)
 - add path filter to test.yml by **@zydou** in [c3113ff](https://github.com/zydou/latex-action/commit/c3113ff840ccb4a206425923712ee83d7ec5c105)
+
+### Chores
+
+- **bump:** bump patch version from `v3.1.0` to `v3.1.1` by **@zydou** in [076dfcc](https://github.com/zydou/latex-action/commit/076dfcc34121bf03a0cdebf00d37bebfb4cc3495)
 
 ### Full Changelog: [v3.1.0 -> v3.1.1](https://github.com/zydou/latex-action/compare/v3.1.0...v3.1.1)
 
