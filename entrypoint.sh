@@ -44,14 +44,12 @@ fi
 
 readarray -t root_file <<<"$root_file"
 
-if [[ -n "$working_directory" ]]; then
-  if [[ ! -d "$working_directory" ]]; then
-    mkdir -p "$working_directory"
-  fi
-  cd "$working_directory"
+if [[ ! -d "$working_directory" ]]; then
+  mkdir -p "$working_directory"
 fi
+cd "$working_directory"
 
-if [[ -n "$glob_root_file" ]]; then
+if [[ "$glob_root_file" = "true" ]]; then
   expanded_root_file=()
   for pattern in "${root_file[@]}"; do
     # shellcheck disable=SC2206
@@ -70,15 +68,15 @@ fi
 IFS=' ' read -r -a args <<<"$args"
 
 if [[ "$compiler" = "latexmk" ]]; then
-  if [[ -n "$latexmk_shell_escape" ]]; then
+  if [[ "$latexmk_shell_escape" = "true" ]]; then
     args+=("-shell-escape")
   fi
 
-  if [[ -n "$latexmk_use_lualatex" && -n "$latexmk_use_xelatex" ]]; then
+  if [[ "$latexmk_use_lualatex" = "true" && "$latexmk_use_xelatex" = "true" ]]; then
     error "Input 'latexmk_use_lualatex' and 'latexmk_use_xelatex' cannot be used at the same time."
   fi
 
-  if [[ -n "$latexmk_use_lualatex" ]]; then
+  if [[ "$latexmk_use_lualatex" = "true" ]]; then
     for i in "${!args[@]}"; do
       if [[ "${args[i]}" = "-pdf" ]]; then
         unset 'args[i]'
@@ -96,7 +94,7 @@ if [[ "$compiler" = "latexmk" ]]; then
     args=("${args[@]/#-interaction=/--interaction=}")
   fi
 
-  if [[ -n "$latexmk_use_xelatex" ]]; then
+  if [[ "$latexmk_use_xelatex" = "true" ]]; then
     for i in "${!args[@]}"; do
       if [[ "${args[i]}" = "-pdf" ]]; then
         unset 'args[i]'
@@ -106,7 +104,7 @@ if [[ "$compiler" = "latexmk" ]]; then
   fi
 else
   for VAR in "${!latexmk_@}"; do
-    if [[ -n "${!VAR}" ]]; then
+    if [[ "${!VAR}" = "true" ]]; then
       error "Input '${VAR}' is only valid if input 'compiler' is set to 'latexmk'."
     fi
   done
@@ -159,7 +157,7 @@ for f in "${root_file[@]}"; do
     continue
   fi
 
-  if [[ -n "$work_in_root_file_dir" ]]; then
+  if [[ "$work_in_root_file_dir" = "true" ]]; then
     pushd "$(dirname "$f")" >/dev/null
     f="$(basename "$f")"
     info "Compile $f in $PWD"
@@ -173,14 +171,14 @@ for f in "${root_file[@]}"; do
 
   "$compiler" "${args[@]}" "$f" || ret="$?"
   if [[ "$ret" -ne 0 ]]; then
-    if [[ -n "$continue_on_error" ]]; then
+    if [[ "$continue_on_error" = "true" ]]; then
       warn "Compile $f failed with exit_code $ret. However, we will continue since 'continue-on-error' is enabled."
     else
       exit "$ret"
     fi
   fi
 
-  if [[ -n "$work_in_root_file_dir" ]]; then
+  if [[ "$work_in_root_file_dir" = "true" ]]; then
     popd >/dev/null
   fi
 done
