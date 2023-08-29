@@ -36,7 +36,7 @@ Each input is provided as a key inside the `with` section of the action.
 
 - `root_file` (**required**, defaults to: "")
 
-  The root LaTeX file to be compiled. You can also pass multiple files as a multi-line string to compile multiple documents. For example:
+  The root LaTeX file to be compiled. You can also pass multiple files as a multi-line string to compile multiple documents. Each file path will be interpreted as bash glob pattern. For example:
 
   ```yaml
     - uses: zydou/latex-action@v3
@@ -44,17 +44,6 @@ Each input is provided as a key inside the `with` section of the action.
         root_file: |
           file1.tex
           file2.tex
-  ```
-
-- `glob_root_file` (optional, defaults to: "false")
-
-  If set, interpret the `root_file` input as bash glob pattern. For example:
-
-  ```yaml
-    - uses: zydou/latex-action@v3
-      with:
-        root_file: '*.tex'
-        glob_root_file: true
   ```
 
 - `working_directory` (optional, defaults to: ".")
@@ -83,7 +72,7 @@ Each input is provided as a key inside the `with` section of the action.
 
 - `extra_fonts` (optional, defaults to: "")
 
-  Install extra `.ttf`/`.otf` fonts to be used by `fontspec`. You can also pass multiple files as a multi-line string. Each file path will be interpreted as glob pattern. For example:
+  Install extra `.ttf`/`.otf` fonts to be used by `fontspec`. You can also pass multiple files as a multi-line string. Each file path will be interpreted as bash glob pattern. For example:
 
   ```yaml
     - uses: zydou/latex-action@v3
@@ -102,6 +91,14 @@ Each input is provided as a key inside the `with` section of the action.
 
   Arbitrary bash codes to be executed after compiling LaTeX documents. For example, `post_compile: "latexmk -c"` to clean up temporary files.
 
+- `texlive_version` (optional, defaults to: "latest")
+
+  The TeX Live version to be used. Currently, you can choose from `2018`, `2019`, `2020`, `2021`, `2022`, `2023`, or `latest`.
+
+- `debian_release` (optional, defaults to: "trixie")
+
+  The Debian release of base image to be used. Currently, you can choose from `buster`, `bullseye`, `bookworm`, or `trixie`.
+
 **The following inputs are only valid if the input `compiler` is not changed.**
 
 - `latexmk_shell_escape` (optional, defaults to: "false")
@@ -115,14 +112,6 @@ Each input is provided as a key inside the `with` section of the action.
 - `latexmk_use_xelatex` (optional, defaults to: "false")
 
   Instruct `latexmk` to use XeLaTeX.
-
-- `texlive_version` (optional, defaults to: "latest")
-
-  The TeX Live version to be used. Currently, you can choose from `2018`, `2019`, `2020`, `2021`, `2022`, `2023`, or `latest`.
-
-- `debian_release` (optional, defaults to: "trixie")
-
-  The Debian release of base image to be used. Currently, you can choose from `buster`, `bullseye`, `bookworm`, or `trixie`.
 
 ## Example
 
@@ -254,10 +243,8 @@ Sometimes you may have custom package (`.sty`) or class (`.cls`) files in other 
     with:
       root_file: main.tex
     env:
-      TEXINPUTS: '.:./custom_template//:'
+      TEXINPUTS: ".:./custom_template//:"
 ```
-
-Noted that you should NOT use `{{ github.workspace }}` or `$GITHUB_WORKSPACE` in `TEXINPUTS`. This action works in a separated docker container, where the workspace directory is mounted into it. Therefore, the workspace directory inside the docker container is different from `github.workspace`.
 
 You can find more information of `TEXINPUTS` [here](https://tex.stackexchange.com/a/93733).
 

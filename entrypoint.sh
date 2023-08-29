@@ -17,26 +17,24 @@ function error() {
 }
 
 root_file="${1}"
-glob_root_file="${2}"
-working_directory="${3}"
-work_in_root_file_dir="${4}"
-continue_on_error="${5}"
-compiler="${6}"
-args="${7}"
-extra_packages="${8}"
-extra_system_packages="${9}"
-extra_fonts="${10}"
-pre_compile="${11}"
-post_compile="${12}"
-latexmk_shell_escape="${13}"
-latexmk_use_lualatex="${14}"
-latexmk_use_xelatex="${15}"
+working_directory="${2}"
+work_in_root_file_dir="${3}"
+continue_on_error="${4}"
+compiler="${5}"
+args="${6}"
+extra_system_packages="${7}"
+extra_fonts="${8}"
+pre_compile="${9}"
+post_compile="${10}"
+latexmk_shell_escape="${11}"
+latexmk_use_lualatex="${12}"
+latexmk_use_xelatex="${13}"
 
 # install git on old images
 if ! command -v git &> /dev/null; then
   apt-get update -qq && apt-get install -qq -y git
 fi
-git config --system --add safe.directory /github/workspace
+git config --system --add safe.directory "${GITHUB_WORKSPACE}"
 
 if [[ -z "${root_file}" ]]; then
   error "Input 'root_file' is missing."
@@ -49,15 +47,13 @@ if [[ ! -d "${working_directory}" ]]; then
 fi
 cd "${working_directory}"
 
-if [[ "${glob_root_file}" = "true" ]]; then
-  expanded_root_file=()
-  for pattern in "${root_file[@]}"; do
-    # shellcheck disable=SC2206
-    expanded=(${pattern})
-    expanded_root_file+=("${expanded[@]}")
-  done
-  root_file=("${expanded_root_file[@]}")
-fi
+expanded_root_file=()
+for pattern in "${root_file[@]}"; do
+  # shellcheck disable=SC2206
+  expanded=(${pattern})
+  expanded_root_file+=("${expanded[@]}")
+done
+root_file=("${expanded_root_file[@]}")
 
 if [[ -z "${compiler}" && -z "${args}" ]]; then
   warn "Input 'compiler' and 'args' are both empty. Reset them to default values."
@@ -141,10 +137,6 @@ if [[ -n "${extra_fonts}" ]]; then
   done
 
   fc-cache -fv
-fi
-
-if [[ -n "${extra_packages}" ]]; then
-  warn "Input 'extra_packages' is deprecated. We now build LaTeX document with full TeXLive installed."
 fi
 
 if [[ -n "${pre_compile}" ]]; then

@@ -64,7 +64,6 @@ jobs:
           texlive_version: ${{ matrix.texlive_version }}
           debian_release: ${{ matrix.debian_release }}
           root_file: glob_test*.tex
-          glob_root_file: true
           working_directory: test/
 
       - name: Compile multiple LaTeX documents in different directories
@@ -73,7 +72,6 @@ jobs:
           texlive_version: ${{ matrix.texlive_version }}
           debian_release: ${{ matrix.debian_release }}
           root_file: subdir*/main.tex
-          glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
 
@@ -83,7 +81,6 @@ jobs:
           texlive_version: ${{ matrix.texlive_version }}
           debian_release: ${{ matrix.debian_release }}
           root_file: extglob/!(subdir3)_glob/*.tex
-          glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
 
@@ -93,7 +90,6 @@ jobs:
           texlive_version: ${{ matrix.texlive_version }}
           debian_release: ${{ matrix.debian_release }}
           root_file: globstar/**/*.tex
-          glob_root_file: true
           working_directory: test/
           work_in_root_file_dir: true
 
@@ -130,7 +126,6 @@ jobs:
           working_directory: test/
           latexmk_shell_escape: true
           latexmk_use_lualatex: true
-          extra_system_packages: python3-pkg-resources
 
       - name: Download extra fonts
         run: |
