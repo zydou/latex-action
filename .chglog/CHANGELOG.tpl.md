@@ -19,7 +19,7 @@
 
 {{ range .Commits -}}
 
-- {{ if .Scope }}**{{ .Scope }}:** {{ end }}{{ .Subject }} by **@{{.Committer.Name}}** in [{{.Hash.Short}}]({{ $.Info.RepositoryURL }}/commit/{{.Hash.Long}})
+- {{ if .Scope }}**{{ .Scope }}:** {{ end }}{{ .Subject }} by **@{{.Author.Name}}** in [{{.Hash.Short}}]({{ $.Info.RepositoryURL }}/commit/{{.Hash.Long}})
 {{ end }}
 
 {{ end -}}
