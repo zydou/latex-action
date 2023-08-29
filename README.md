@@ -8,14 +8,14 @@ This is a GitHub Action to compile LaTeX documents, and it's based on [xu-cheng/
 
 |                         | **Original** | **This Action** |
 | ----------------------- | ------------ | --------------- |
-| base image              | Alpine       | Debian          |
+| base image              | Alpine       | Debian & Ubuntu |
 | install system packages | apk add      | apt-get install |
-| choose texlive version  | ✅            | ✅               |
-| choose base image       | /            | ✅               |
+| change texlive version  | ✅            | ✅               |
+| change base image       | /            | ✅               |
 
-The main difference is that this action uses `Debian` as the base image, whereas the original uses `Alpine`. Certain tools require `glibc` to function properly. With Debian OS, you won't encounter any glibc-related issues and can use `apt-get` to install a wider range of packages compared to using `apk` in Alpine. For instance, the Alpine-based image lacks the [xindy package](https://github.com/xu-cheng/latex-action/issues/32).
+The main difference is that this action uses `Debian` or `Ubuntu` as the base image, whereas the original uses `Alpine`. Certain tools require `glibc` to function properly. Within debian or ubuntu, you won't encounter any glibc-related issues and can use `apt-get` to install a wider range of packages compared to using `apk` in Alpine. For instance, the Alpine-based image lacks the [xindy package](https://github.com/xu-cheng/latex-action/issues/32).
 
-In addition, this action also allows you to specify the TeX Live version and the Debian release version through input parameters. In contrast, the original action requires the use of different tags to specify the TeX Live version. The advantage of this is that you can easily use `matrix` syntax to build your document with multiple TeX Live versions. For example:
+In addition, this action also allows you to specify the TeX Live version and the base image version through input parameters. ~~In contrast, the original action requires the use of different tags to specify the TeX Live version.~~ The advantage of this is that you can easily use `matrix` syntax to build your document with multiple TeX Live versions. For example:
 
 ```yaml
 jobs:
@@ -23,12 +23,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        texlive: [2023, 2022, 2021, 2020, 2019, 2018] # `latest` is also valid
-        debian: [buster, bullseye, bookworm, trixie]
-    name: texlive-${{ matrix.texlive }}-${{ matrix.debian_release }}
+        texlive_version: [2023, 2022, 2021, 2020, 2019, 2018] # `latest` is also valid
+        base_image: [buster, bullseye, bookworm, trixie, xenial, bionic, focal, jammy]
+    name: texlive-${{ matrix.texlive_version }}-${{ matrix.base_image }}
 ```
-
-It's not possible to do this for the original action because currently GitHub Actions doesn't support to use `matrix` syntax in `uses` field.
 
 ## Inputs
 
@@ -93,11 +91,11 @@ Each input is provided as a key inside the `with` section of the action.
 
 - `texlive_version` (optional, defaults to: "latest")
 
-  The TeX Live version to be used. Currently, you can choose from `2018`, `2019`, `2020`, `2021`, `2022`, `2023`, or `latest`.
+  The TeX Live version to be used. Currently, you can choose from `2018`, `2019`, `2020`, `2021`, `2022`, `2023`, or `latest`. (These choices may be outdated, please [check this page for the latest choices](https://github.com/zydou/texlive))
 
-- `debian_release` (optional, defaults to: "trixie")
+- `base_image` (optional, defaults to: "trixie")
 
-  The Debian release of base image to be used. Currently, you can choose from `buster`, `bullseye`, `bookworm`, or `trixie`.
+  The base image version to be used. Currently, you can choose from `buster`, `bullseye`, `bookworm`, `trixie`, `xenial`, `bionic`, `focal`, or `jammy`. (These choices may be outdated, please [check this page for the latest choices](https://github.com/zydou/texlive))
 
 **The following inputs are only valid if the input `compiler` is not changed.**
 
@@ -132,10 +130,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        texlive: [2023, 2022, 2021] # choose from 2018 to 2023, or latest
-        # if you need to use different debian release, uncomment the following line
-        # debian: [buster, bullseye, bookworm, trixie]
-    name: Build with texlive-${{ matrix.texlive }}
+        # choose from 2018 to 2023, or latest
+        texlive_version: [2023, 2022, 2021]
+        # base_image: [buster, bullseye, bookworm, trixie, xenial, bionic, focal, jammy]
+    name: Build with texlive-${{ matrix.texlive_version }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -145,10 +143,10 @@ jobs:
       - name: Compile LaTeX document
         uses: zydou/latex-action@v3
         with:
-          texlive_version: ${{ matrix.texlive }}
+          texlive_version: ${{ matrix.texlive_version }}
+          # base_image: ${{ matrix.base_image }}
           work_in_root_file_dir: true
           continue_on_error: true
-          glob_root_file: true
           root_file: |
             **/*.tex
 
@@ -166,11 +164,11 @@ jobs:
           mkdir public
           find . -type f -name "*.pdf" -exec cp {} public \;
 
-      - name: Push pdf files to texlive-${{matrix.texlive}} branch
+      - name: Push pdf files to texlive-${{matrix.texlive_version}} branch
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: texlive-${{ matrix.texlive }}
+          branch: texlive-${{ matrix.texlive_version }}
           folder: ./public
           single-commit: true
           commit-message: ${{ github.event.head_commit.message }}
@@ -243,7 +241,7 @@ Sometimes you may have custom package (`.sty`) or class (`.cls`) files in other 
     with:
       root_file: main.tex
     env:
-      TEXINPUTS: ".:./custom_template//:"
+      TEXINPUTS: '.:./custom_template//:'
 ```
 
 You can find more information of `TEXINPUTS` [here](https://tex.stackexchange.com/a/93733).

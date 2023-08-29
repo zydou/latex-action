@@ -6,9 +6,12 @@ inputs:
   texlive_version:
     description: Tex Live version to be used
     default: latest
-  debian_release:
-    description: Debian debian_release to be used
+  base_image:
+    description: Base image to be used
     default: trixie
+  debian_release:
+    description: "[Deprecated] use `base_image` instead"
+    default: deprecated
   root_file:
     description: The root LaTeX file to be compiled
     required: true
@@ -52,6 +55,15 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: set base_image
+      shell: bash
+      run: |
+        if [[ "${{ inputs.debian_release }}" != "deprecated" ]]; then
+        echo "Deprecated warning: `debian_release` is deprecated, use `base_image` instead."
+        echo "BASE_IMG=${{ inputs.debian_release }}" >> "${GITHUB_ENV}"
+        else
+        echo "BASE_IMG=${{ inputs.base_image }}" >> "${GITHUB_ENV}"
+        fi
     - shell: bash
       run: >
         docker run --rm
@@ -115,7 +127,7 @@ runs:
         -v "$GITHUB_ACTION_PATH/entrypoint.sh":/entrypoint.sh
         -w "$GITHUB_WORKSPACE"
         --entrypoint "/entrypoint.sh"
-        zydou/texlive:${{ inputs.texlive_version }}-${{ inputs.debian_release }}
+        zydou/texlive:${{ inputs.texlive_version }}-${{ env.BASE_IMG }}
         "${{ inputs.root_file }}"
         "${{ inputs.working_directory }}"
         "${{ inputs.work_in_root_file_dir }}"
